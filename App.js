@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, SafeAreaView, Image, TouchableOpacity } from 'r
 import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import Button from './src/components/Button';
+import * as FileSystem from 'expo-file-system';
 export default function App() {
   // console.log(useDeviceOrientation());
   const [count, setcount] = useState(0);
@@ -37,14 +38,38 @@ export default function App() {
   const saveImage = async () => {
     if (image) {
       try {
-        await MediaLibrary.createAssetAsync(image);
-        alert('Picture save!');
+        const base64String = await convertImageToBase64(image);
+        // console.log('Base64 String:', base64String);
+        const apiUrl = '';
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          body: `base64Data=${encodeURIComponent(image)}`,
+        });
+        if (response.ok) {
+
+          alert('iamge uploaded successfully!');
+        }
+        else {
+          alert("image upload failed");
+        }
         setImage(null);
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
     }
-  }
+  };
+
+  const convertImageToBase64 = async (imageUri) => {
+    try {
+      const base64Data = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return base64Data;
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      return null;
+    }
+  };
   if (hasCameraPermission == false) {
     return <Text>No access to camera</Text>
   }
